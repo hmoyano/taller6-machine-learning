@@ -2,117 +2,91 @@
 import streamlit as st
 import pandas as pd
 import joblib
+import os
 
-# Cargar modelo y escalador
-modelo = joblib.load("modelo_knn.pkl")
-scaler = joblib.load("scaler_kmeans.pkl")
+BASE_DIR = os.path.dirname(__file__)
 
-# Variables utilizadas durante el entrenamiento
+modelo = joblib.load(
+    os.path.join(BASE_DIR, "modelo_knn_iris.pkl")
+)
+
+scaler = joblib.load(
+    os.path.join(BASE_DIR, "scaler_iris.pkl")
+)
+
 variables = [
-    "Customer_care_calls",
-    "Customer_rating",
-    "Cost_of_the_Product",
-    "Prior_purchases",
-    "Discount_offered",
-    "Weight_in_gms"
+    "sepal length (cm)",
+    "sepal width (cm)",
+    "petal length (cm)",
+    "petal width (cm)"
 ]
 
-# Configuración de la página
 st.set_page_config(
-    page_title="Clasificación logística de envíos",
-    page_icon="📦"
+    page_title="Clasificación Iris con K-NN",
+    page_icon="🌸"
 )
 
-st.title("📦 Clasificación logística de envíos")
+st.title("🌸 Clasificación de agrupaciones - Iris")
 
 st.write(
-    "Ingrese las características de un nuevo envío para "
-    "determinar el segmento logístico al que pertenece."
+    "Ingrese las características de una nueva flor para "
+    "determinar a qué agrupación pertenece."
 )
 
-# Entradas del usuario
-customer_care_calls = st.number_input(
-    "Número de llamadas a servicio al cliente",
-    min_value=0,
-    step=1
-)
-
-customer_rating = st.slider(
-    "Calificación del cliente",
-    min_value=1,
-    max_value=5,
-    value=3
-)
-
-cost_product = st.number_input(
-    "Costo del producto",
+sepal_length = st.number_input(
+    "Longitud del sépalo (cm)",
     min_value=0.0,
-    step=1.0
+    value=5.1,
+    step=0.1
 )
 
-prior_purchases = st.number_input(
-    "Número de compras anteriores",
-    min_value=0,
-    step=1
-)
-
-discount = st.number_input(
-    "Descuento ofrecido",
+sepal_width = st.number_input(
+    "Ancho del sépalo (cm)",
     min_value=0.0,
-    step=1.0
+    value=3.5,
+    step=0.1
 )
 
-weight = st.number_input(
-    "Peso del producto en gramos",
+petal_length = st.number_input(
+    "Longitud del pétalo (cm)",
     min_value=0.0,
-    step=10.0
+    value=1.4,
+    step=0.1
 )
 
-# Botón de clasificación
-if st.button("Clasificar envío"):
+petal_width = st.number_input(
+    "Ancho del pétalo (cm)",
+    min_value=0.0,
+    value=0.2,
+    step=0.1
+)
 
-    nuevo_envio = pd.DataFrame(
+if st.button("Clasificar"):
+
+    nueva_flor = pd.DataFrame(
         [[
-            customer_care_calls,
-            customer_rating,
-            cost_product,
-            prior_purchases,
-            discount,
-            weight
+            sepal_length,
+            sepal_width,
+            petal_length,
+            petal_width
         ]],
         columns=variables
     )
 
-    # Aplicar el mismo escalador usado en el entrenamiento
-    nuevo_envio_scaled = scaler.transform(
-        nuevo_envio
-    )
+    nueva_flor_scaled = scaler.transform(nueva_flor)
 
-    # Clasificar mediante K-NN
     cluster = modelo.predict(
-        nuevo_envio_scaled
+        nueva_flor_scaled
     )[0]
 
-    # Proporción de vecinos del cluster seleccionado
-    probabilidades = modelo.predict_proba(
-        nuevo_envio_scaled
-    )[0]
-
-    confianza = probabilidades.max() * 100
+    probabilidad = modelo.predict_proba(
+        nueva_flor_scaled
+    )[0].max() * 100
 
     st.success(
-        f"El nuevo envío pertenece al Cluster {cluster}"
+        f"La observación pertenece al Cluster {cluster}"
     )
 
     st.write(
-        f"Coincidencia con el segmento: {confianza:.2f}%"
-    )
-
-    st.subheader("Información del envío")
-    st.dataframe(nuevo_envio)
-
-    st.info(
-        "La clasificación permite asignar el nuevo envío "
-        "a uno de los segmentos logísticos identificados "
-        "previamente mediante K-Means."
+        f"Coincidencia con la agrupación: {probabilidad:.2f}%"
     )
